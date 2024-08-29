@@ -13,15 +13,24 @@ class ApiLoginController extends Controller
 
     public function logoutproses()
     {
-        // Melakukan permintaan POST ke API logout
-        $response = Http::post($this->apiUrl);
+        // Mendapatkan token dari sesi pengguna (asumsi token disimpan dalam sesi)
+        $token = session('api_token'); // Pastikan token disimpan di sesi atau cara lain
+
+        // Melakukan permintaan POST ke API logout dengan token
+        // $response = Http::withToken($token)->post($this->apiUrl);
 
         // Memeriksa apakah logout berhasil berdasarkan status respons
-        if ($response->successful()) {
+        if ($token) {
+            // Hapus token dari sesi
+            session()->forget('api_token');
+            session()->forget('id');
+            session()->forget('name');
+            session()->forget('email');
+            session()->forget('id_role');
             // Redirect ke halaman login jika logout berhasil
             return redirect()->route('login')->with('message', 'Logout berhasil.');
         } else {
-            // Jika logout gagal, kembalikan respons atau tampilkan pesan error
+            // Jika logout gagal, tampilkan pesan error
             return redirect()->back()->withErrors(['error' => 'Logout gagal.']);
         }
     }

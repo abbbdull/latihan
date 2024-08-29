@@ -1,5 +1,24 @@
 @extends('layout.temp')
 @section('content')
+<style>
+        @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    .pulse-effect:hover {
+        animation: pulse 2s infinite;
+    }
+</style>
     <div class="breadcrumbs">
         <div class="container">
             <div class="row">
@@ -50,7 +69,7 @@
                 </div>
                 <div class="col-sm-4">
                     <div class="product-desc">
-                        <h3>Women's Boots Shoes Maca</h3>
+                        <h3>CLARKS WALLABEES</h3>
                         <p class="price">
                             <span>{{ $produk['harga'] }}</span>
                             <span class="rate">
@@ -59,7 +78,7 @@
                                 <i class="icon-star-full"></i>
                                 <i class="icon-star-full"></i>
                                 <i class="icon-star-half"></i>
-                                (74 Rating)
+                                (96 Rating)
                             </span>
                         </p>
                         <p>Clarks Wallabee Maple Size 40.</p>
@@ -110,12 +129,12 @@
                             <div class="d-flex justify-content-center mt-3">
                                 @if (session('api_token'))
                                     <div class="col-sm-12 text-center">
-                                        <p class="addtocart"><a href="#" class="btn btn-primary btn-addtocart"><i
+                                        <p class="addtocart"><a href="#" class="btn btn-primary btn-addtocart pulse-effect"><i
                                                     class="icon-shopping-cart"></i> Add to Cart</a></p>
                                     </div>
                                 @else
                                     <div class="col-sm-12 text-center">
-                                        <p class="addtocart"><a href="{{ route('login') }}" class="btn btn-primary"><i
+                                        <p class="addtocart"><a href="{{ route('login') }}" class="btn btn-primary pulse-effect"><i
                                                     class="icon-shopping-cart"></i> Add to Cart</a></p>
                                     </div>
                                 @endif
@@ -372,6 +391,28 @@
 
             });
         });
-        
+
+          $(document).ready(function() {
+        // Fungsi untuk mengurangi quantity
+        $('.quantity-left-minus').click(function(e) {
+            e.preventDefault();
+            var $input = $(this).closest('.input-group').find('input');
+            var currentVal = parseInt($input.val());
+            if (!isNaN(currentVal) && currentVal > $input.attr('min')) {
+                $input.val(currentVal - 1).change();
+            }
+        });
+
+        // Fungsi untuk menambah quantity
+        $('.quantity-right-plus').click(function(e) {
+            e.preventDefault();
+            var $input = $(this).closest('.input-group').find('input');
+            var currentVal = parseInt($input.val());
+            if (!isNaN(currentVal) && currentVal < $input.attr('max')) {
+                $input.val(currentVal + 1).change();
+            }
+        });
+    });
+
     </script>
 @endsection

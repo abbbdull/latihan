@@ -45,9 +45,9 @@
                 <h4>Information</h4>
                 <p>
                 <ul class="colorlib-footer-links">
-                    <li><a href="#">About us</a></li>
+                    <li><a href="{{ route('usabout') }}">About us</a></li>
                     <li><a href="#">Delivery Information</a></li>
-                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="{{ route('privacyPolicy') }}">Privacy Policy</a></li>
                     <li><a href="#">Support</a></li>
                     <li><a href="#">Order Tracking</a></li>
                 </ul>

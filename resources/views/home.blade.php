@@ -40,7 +40,7 @@
                         </div>
                     </div>
                 </li>
-                <li style="background-image: url({{ asset('images/clarks.limited2.jpg') }});">
+                <li style="background-image: url({{ asset('images/id.jfif') }});">
                     <div class="overlay"></div>
                     <div class="container-fluid">
                         <div class="row">

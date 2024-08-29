@@ -115,12 +115,12 @@
                             <div class="col-sm-4 text-center">
                                 <div class="total">
                                     <div class="sub">
-                                        <p><span>Subtotal:</span> <span>200.00</span></p>
-                                        <p><span>Delivery:</span> <span>0.00</span></p>
-                                        <p><span>Discount:</span> <span>45.00</span></p>
+                                        <p><span>Subtotal:</span> <span id="subtotal">0.00</span></p>
+                                        <p><span>Delivery:</span> <span id="ongkir">0.00</span></p>
+                                        <p><span>Discount:</span> <span id="diskon">0.00</span></p>
                                     </div>
                                     <div class="grand-total">
-                                        <p>Subtotal: <span id="subtotal">0.00</span></p>
+                                        <p>Subtotal: <span id="hargatotal">0.00</span></p>
                                     </div>
                                     <a href="{{ route('checkout') }}" class="btn btn-primary btn-addtocheckout">Checkout</a>
                                 </div>
@@ -180,6 +180,9 @@
                         cartList.empty(); // Hapus item lama
 
                         response.forEach(function(item) {
+                            const formattedTotal = parseInt(item.total).toLocaleString('id-ID');
+                            const formattedHarga = parseInt(item.harga_produk).toLocaleString(
+                                'id-ID');
                             var cartItem = `
                             <div class="product-cart d-flex">
                                 <div class="one-forth">
@@ -190,7 +193,7 @@
                                 </div>
                                 <div class="one-eight text-center">
                                     <div class="display-tc">
-                                        <span class="price" id="price-${item.id}">${item.harga_produk}</span>
+                                        <span class="price" id="price-${item.id}">${formattedHarga}</span>
                                     </div>
                                 </div>
                                 <div class="one-eight text-center">
@@ -202,7 +205,7 @@
                                 </div>
                                 <div class="one-eight text-center">
                                     <div class="display-tc">
-                                        <span class="total-price" id="total-${item.id}">${item.total}</span>
+                                        <span class="total-price" id="total-${item.id}">${formattedTotal}</span>
                                     </div>
                                 </div>
                                 <div class="one-eight text-center">
@@ -247,7 +250,7 @@
                                                 'success'
                                             );
                                             loadCart
-                                        (); // Refresh daftar keranjang
+                                                (); // Refresh daftar keranjang
                                         },
                                         error: function(xhr) {
                                             Swal.fire(
@@ -274,48 +277,86 @@
                 });
             }
 
-            $('#cart-list').on('click', '.updatequantity', function() {
-                var itemId = $(this).data('id');
-                var action = $(this).data('action');
+            $(document).ready(function() {
+                $('#cart-list').on('click', '.updatequantity', function() {
+                    var itemId = $(this).data('id');
+                    var action = $(this).data('action');
 
-                var $quantityInput = $(this).siblings('input');
-                var currentQuantity = parseInt($quantityInput.val(), 10);
+                    var $quantityInput = $(this).siblings('input');
+                    var currentQuantity = parseInt($quantityInput.val(), 10);
 
-                var $priceSpan = $(`#price-${itemId}`);
-                var pricePerUnit = parseFloat($priceSpan.text().replace(/[^0-9.-]+/g,
-                "")); // Mengambil harga unit
+                    var $priceSpan = $(`#price-${itemId}`);
+                    var priceText = $priceSpan.text(); // Ganti textContent dengan text()
 
-                if (action === 'minus' && currentQuantity > 1) {
-                    currentQuantity--;
-                } else if (action === 'plus') {
-                    currentQuantity++;
-                }
-
-                $quantityInput.val(currentQuantity);
-
-                var newTotal = (pricePerUnit * currentQuantity).toFixed(2); // Menghitung total harga baru
-                $(`#total-${itemId}`).text(newTotal);
-
-                $.ajax({
-                    url: 'http://localhost/latihan6/api/updatequantity',
-                    type: 'POST',
-                    data: {
-                        keranjang_id: itemId,
-                        quantity: currentQuantity,
-                        total: newTotal
-                    },
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        console.log('Success:', response);
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error:', error);
+                    if (priceText) { // Pastikan priceText tidak kosong
+                        var pricePerUnit = parseFloat(priceText.replace(/\./g, '').replace(',',
+                            '.'));
+                        // Lakukan sesuatu dengan pricePerUnit
+                    } else {
+                        console.error('Teks harga tidak ditemukan atau kosong.');
+                    } // Mengambil harga unit
+                    // console.log("harga "+ pricePerUnit)
+                    // Update quantity based on action
+                    if (action === 'minus' && currentQuantity > 1) {
+                        currentQuantity--;
+                    } else if (action === 'plus') {
+                        currentQuantity++;
                     }
-                });
-            });
 
+                    $quantityInput.val(currentQuantity);
+
+                    // Calculate new total price
+
+                    var newTotal = (pricePerUnit * currentQuantity); // Menghitung total harga baru
+                    const formattedTotal = parseInt(newTotal).toLocaleString('id-ID');
+                    console.log("harga " + formattedTotal)
+                    $(`#total-${itemId}`).text(formattedTotal);
+
+                    // Optional: Update subtotal if needed
+                    updateSubtotal();
+
+                    // Send updated quantity to server
+                    $.ajax({
+                        url: 'http://localhost/latihan6/api/updatequantity',
+                        type: 'POST',
+                        data: {
+                            keranjang_id: itemId,
+                            quantity: currentQuantity,
+
+                        },
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(response) {
+                            console.log('Success:', response);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error:', error);
+                        }
+                    });
+                });
+
+                function updateSubtotal() {
+                    var subtotal = 0;
+
+                    $('.total-price').each(function() {
+                        var itemText = $(this).text()
+                    .trim(); // Dapatkan teks dan hapus spasi ekstra
+                        var itemTotal = parseFloat(itemText.replace(/[^0-9,-]/g, '').replace(',',
+                            '.')); // Hapus karakter non-numerik selain ',' dan '-'
+
+                        // Pastikan itemTotal adalah angka valid
+                        if (!isNaN(itemTotal)) {
+                            subtotal += itemTotal;
+                        } else {
+                            console.warn('Total item tidak valid:', itemText);
+                        }
+                    });
+                    const formattedSub = parseInt(subtotal).toLocaleString('id-ID');
+                    // Update subtotal di UI
+                    $('#subtotal').text(formattedSub);
+                }
+            });
             loadCart(); // Load cart items on page load
         });
 
@@ -334,7 +375,8 @@
                     },
                     success: function(response) {
                         if (response.success) {
-                            $('#subtotal').text(response.subtotal);
+                            const formattedSubTotal = parseInt(response.subtotal).toLocaleString('id-ID');
+                            $('#subtotal').text(formattedSubTotal );
                         } else {
                             alert('Failed to calculate subtotal.');
                         }
@@ -347,49 +389,73 @@
 
             fetchSubtotal(); // Memanggil fungsi untuk mendapatkan subtotal
         });
-    </script>
-@endsection
-@section('js')
-    <script>
-        $(document).ready(function() {
-            $('.btn-addtocheckout').click(function(e) {
-                e.preventDefault();
 
-                // Ambil token API dari session atau tempat lain
-                var apiToken = "{{ session('api_token') }}";
-                var isi_url = "http://localhost/latihan6/api/checkout"; // Pastikan URL-nya benar
+        // $(document).ready(function() {
+        //     $('.btn-addtocheckout').click(function(e) {
+        //         e.preventDefault();
 
-                // Data yang akan dikirimkan dalam permintaan POST
-                var data = {
-                    users: "{{ session('id') }}", // Ganti dengan nilai yang sesuai atau ambil dari input form
-                    produks: {{ $produk['id'] }}, // Ganti dengan nilai yang sesuai atau ambil dari input form
-                    quantity: 1, // Ganti dengan nilai yang sesuai atau ambil dari input form
-                    harga: {{ $produk['harga'] }} // Ganti dengan nilai yang sesuai atau ambil dari input form
-                };
+        //         var apiToken = "{{ session('api_token') }}";
+        //         var isi_url = "http://192.168.3.210/latihan6/api/checkout/add";
 
-                alert('Data yang akan dikirim: ' + JSON.stringify(data));
+        //         var selectedProductIds = [];
 
-                $.ajax({
-                    url: isi_url,
-                    type: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + apiToken,
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                        'Content-Type': 'application/json', // Tetap gunakan JSON jika server mengharapkan JSON
-                    },
-                    data: JSON.stringify(data), // Mengonversi objek data ke format JSON
-                    success: function(response) {
-                        alert('Item added to cart!');
-                        window.location.href = "{{ route('checkout') }}";
-                    },
-                    error: function(xhr, status, error) {
-                        console.log(xhr.responseText); // Log pesan kesalahan untuk debugging
-                        alert('Failed to add item to cart. Please log in.');
-                    }
-                });
+        //         $('#cart-list .product-cart').each(function() {
+        //             var productId = $(this).find('.closed').data('id');
+        //             selectedProductIds.push(productId);
+        //         });
 
+        //         var data = {
+        //             users: "{{ session('id') }}",
+        //             produks: selectedProductIds,
+        //         };
+
+        //         alert('Data yang akan dikirim: ' + JSON.stringify(data));
+
+        //         $.ajax({
+        //             url: isi_url,
+        //             type: 'POST',
+        //             headers: {
+        //                 'Authorization': 'Bearer ' + apiToken,
+        //                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+        //                 'Content-Type': 'application/json',
+        //             },
+        //             data: JSON.stringify(data),
+        //             success: function(response) {
+        //                 alert('Item added to checkout!');
+        //                 window.location.href = "{{ route('checkout') }}";
+        //             },
+        //             error: function(xhr, status, error) {
+        //                 console.log(xhr.responseText);
+        //                 alert('Failed to add item to checkout. Please log in.'+xhr.responseText);
+        //             }
+        //         });
+
+            // });
+        // });
+        document.querySelectorAll('.updatequantity').forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const action = this.getAttribute('data-action');
+                const quantityInput = document.getElementById(`quantity-${id}`);
+                let quantity = parseInt(quantityInput.value);
+
+                // Mengubah jumlah kuantitas berdasarkan aksi
+                if (action === 'plus') {
+                    quantity += 1;
+                } else if (action === 'minus' && quantity > 1) {
+                    quantity -= 1;
+                }
+
+                quantityInput.value = quantity;
+
+                // Kalkulasi harga total baru
+                const price = parseFloat(document.getElementById(`price-${id}`).textContent);
+                const total = price * quantity;
+                const formattedPrice = parseInt(total).toLocaleString('id-ID');
+                // Setel harga total menjadi bilangan bulat
+                document.getElementById(`total-${id}`).textContent = parseInt(
+                formattedPrice); // Mengonversi total menjadi bilangan bulat
             });
         });
-
     </script>
 @endsection

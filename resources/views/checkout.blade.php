@@ -172,8 +172,8 @@
                                 </div>
                             </div>
                         </div>
-                        <a href="#" id="save-address-btn"
-                         class="btn btn-primary btn-pulse">Save</a>
+                        <button id="save-address-btn" class="btn btn-primary btn-pulse">Save</button>
+
                     </form>
                 </div>
 
@@ -190,7 +190,7 @@
                                             <li><span>1 x Product Name</span> <span>$78.00</span></li>
                                         </ul>
                                     </li>
-                                    <li><span>Shipping</span> <span>$0.00</span></li>
+                                    <li><span>Shipping</span> <span id="shipping">$0.00</span></li>
                                     <li><span>Order Total</span> <span id="order-total">$180.00</span></li>
                                 </ul>
                             </div>
@@ -352,7 +352,7 @@
                 console.error('Error fetching provinces:', error);
             },
             complete: function() {
-                $('#city').show(); // Sembunyikan indikator loading
+                $('#city').show();
             }
         });
 
@@ -377,9 +377,9 @@
                 error: function(error) {
                     console.error('Error fetching city:', error);
                 },
-            complete: function() {
-                $('#city').show(); // Sembunyikan indikator loading
-            }
+                complete: function() {
+                    $('#city').show(); // Sembunyikan indikator loading
+                }
             });
         }
 
@@ -389,57 +389,113 @@
             console.log(provinceId)
             if (provinceId !== '#') {
 
-                    $('#city').hide(); // Tampilkan indikator loading
+                $('#city').hide(); // Tampilkan indikator loading
 
                 fetchCities(provinceId);
             }
         });
 
         $(document).ready(function() {
-    // Ketika tombol diklik
-    $('#fetchProfile').click(function() {
-        // Mengambil profil data dari API
-        $.ajax({
-            url: 'http://localhost/latihan7/api/profil', // Ganti dengan URL endpoint API Anda
-            type: 'GET',
-            data: { user_id: 1 }, // Ganti dengan ID pengguna yang ingin diambil
-            success: function(response) {
-                if (response.status === 'success') {
-                    // Menampilkan data profil di dalam elemen form
-                    $('#firstname').val(response.data.first_name);
-                    $('#lastname').val(response.data.last_name);
-                    $('#company').val(response.data.company);
-                    $('#address').val(response.data.address);
-                    $('#zippostalcode').val(response.data.postal_code);
-                    $('#phonenumber').val(response.data.phone_number);
+            // Ketika halaman selesai di-load, ambil profil data dari API
+            fetchUserProfile();
 
-                    // Mengisi select dropdown untuk provinsi dan kota
-                    $('#idprovince').val(response.data.id_province); // Asumsi `id_province` adalah nilai yang valid
-                    $('#idcity').val(response.data.id_city); // Asumsi `id_city` adalah nilai yang valid
+            function fetchUserProfile() {
+                $.ajax({
+                    url: 'http://localhost/latihan6/api/profil', // Ganti dengan URL endpoint API Anda
+                    type: 'POST',
+                    data: {
+                        user_id: 1 // Ganti dengan ID pengguna yang ingin diambil
+                    },
+                    dataType: 'json', // Pastikan dataType sesuai dengan response dari API
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            // Menampilkan data profil di dalam elemen form
+                            $('#fname').val(response.data.first_name);
+                            $('#lname').val(response.data.last_name);
+                            $('#companyname').val(response.data.company);
+                            $('#address').val(response.data.address);
+                            $('#zippostalcode').val(response.data.postal_code);
+                            $('#phonenumber').val(response.data.phone_number);
 
-                    // Tampilkan pesan sukses menggunakan Swal Fire
-                    Swal.fire({
-                        title: 'Data Profil Berhasil Diambil!',
-                        icon: 'success',
-                    });
-                } else {
-                    Swal.fire({
-                        title: 'Gagal Mengambil Data Profil',
-                        text: 'Data profil tidak ditemukan.',
-                        icon: 'error',
-                    });
-                }
-            },
-            error: function(error) {
-                console.error('Error fetching profile:', error);
-                Swal.fire({
-                    title: 'Error!',
-                    text: 'Terjadi kesalahan saat mengambil data profil.',
-                    icon: 'error',
+                            // Mengisi select dropdown untuk provinsi dan kota
+                            $('#idprovince').val(response.data
+                                .id_province); // Asumsi `id_province` adalah nilai yang valid
+                            $('#idcity').val(response.data
+                                .id_city); // Asumsi `id_city` adalah nilai yang valid
+
+                            // Fetch cities when province is pre-selected
+                            fetchCities(response.data.id_province);
+                        } else {
+                            Swal.fire({
+                                title: 'Gagal Mengambil Data Profil',
+                                text: 'Data profil tidak ditemukan.',
+                                icon: 'error',
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching profile:', xhr.responseText);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Terjadi kesalahan saat mengambil data profil: ' + xhr
+                                .responseText,
+                            icon: 'error',
+                        });
+                    }
+                });
+            }
+
+            // Fungsi untuk mengambil kota berdasarkan ID provinsi
+            function fetchCities(provinceId) {
+                $.ajax({
+                    url: 'http://localhost/latihan6/city', // Ganti dengan URL endpoint Laravel Anda
+                    type: 'POST',
+                    data: {
+                        province: provinceId
+                    },
+                    success: function(response) {
+                        var cities = response.rajaongkir.results;
+                        var $select = $('#city');
+                        $select.empty();
+                        $select.append('<option value="#">Select City</option>');
+                        $.each(cities, function(index, city) {
+                            $select.append('<option value="' + city.city_id + '">' + city
+                                .city_name + '</option>');
+                        });
+                    },
+                    error: function(error) {
+                        console.error('Error fetching cities:', error);
+                    }
                 });
             }
         });
-    });
-});
+
+        $('#city').change(function() {
+            var cityId = $(this).val();
+            var weight = 10000;
+
+            if (cityId !== '#') {
+                $.ajax({
+                    url: 'https://api.rajaongkir.com/starter/cost',
+                    type: 'POST',
+                    data: {
+                        origin: 'YOUR_ORIGIN',
+                        destination: cityId,
+                        weight: weight,
+                        courier: 'jne',
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        var cost = response.rajaongkir.results[0].costs[0].cost[0].value;
+                        $('#shipping').text('$' + (cost / 1000).toFixed(
+                            2));
+                        updateTotal(cost);
+                    },
+                    error: function(error) {
+                        console.error('Error fetching shipping cost:', error);
+                    }
+                });
+            }
+        });
     </script>
 @endsection

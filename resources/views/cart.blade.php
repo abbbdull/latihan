@@ -312,10 +312,9 @@
                     console.log("harga " + formattedTotal)
                     $(`#total-${itemId}`).text(formattedTotal);
 
-                    // Optional: Update subtotal if needed
                     updateSubtotal();
 
-                    // Send updated quantity to server
+
                     $.ajax({
                         url: 'http://localhost/latihan6/api/updatequantity',
                         type: 'POST',
@@ -341,11 +340,9 @@
 
                     $('.total-price').each(function() {
                         var itemText = $(this).text()
-                    .trim(); // Dapatkan teks dan hapus spasi ekstra
+                            .trim();
                         var itemTotal = parseFloat(itemText.replace(/[^0-9,-]/g, '').replace(',',
-                            '.')); // Hapus karakter non-numerik selain ',' dan '-'
-
-                        // Pastikan itemTotal adalah angka valid
+                            '.'));
                         if (!isNaN(itemTotal)) {
                             subtotal += itemTotal;
                         } else {
@@ -353,15 +350,15 @@
                         }
                     });
                     const formattedSub = parseInt(subtotal).toLocaleString('id-ID');
-                    // Update subtotal di UI
+
                     $('#subtotal').text(formattedSub);
                 }
             });
-            loadCart(); // Load cart items on page load
+            loadCart();
         });
 
         $(document).ready(function() {
-            var userId = {{ session('id') }}; // Ganti dengan ID pengguna yang sesuai
+            var userId = {{ session('id') }};
 
             function fetchSubtotal() {
                 $.ajax({
@@ -375,8 +372,9 @@
                     },
                     success: function(response) {
                         if (response.success) {
-                            const formattedSubTotal = parseInt(response.subtotal).toLocaleString('id-ID');
-                            $('#subtotal').text(formattedSubTotal );
+                            const formattedSubTotal = parseInt(response.subtotal).toLocaleString(
+                                'id-ID');
+                            $('#subtotal').text(formattedSubTotal);
                         } else {
                             alert('Failed to calculate subtotal.');
                         }
@@ -387,51 +385,9 @@
                 });
             }
 
-            fetchSubtotal(); // Memanggil fungsi untuk mendapatkan subtotal
+            fetchSubtotal();
         });
 
-        // $(document).ready(function() {
-        //     $('.btn-addtocheckout').click(function(e) {
-        //         e.preventDefault();
-
-        //         var apiToken = "{{ session('api_token') }}";
-        //         var isi_url = "http://192.168.3.210/latihan6/api/checkout/add";
-
-        //         var selectedProductIds = [];
-
-        //         $('#cart-list .product-cart').each(function() {
-        //             var productId = $(this).find('.closed').data('id');
-        //             selectedProductIds.push(productId);
-        //         });
-
-        //         var data = {
-        //             users: "{{ session('id') }}",
-        //             produks: selectedProductIds,
-        //         };
-
-        //         alert('Data yang akan dikirim: ' + JSON.stringify(data));
-
-        //         $.ajax({
-        //             url: isi_url,
-        //             type: 'POST',
-        //             headers: {
-        //                 'Authorization': 'Bearer ' + apiToken,
-        //                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-        //                 'Content-Type': 'application/json',
-        //             },
-        //             data: JSON.stringify(data),
-        //             success: function(response) {
-        //                 alert('Item added to checkout!');
-        //                 window.location.href = "{{ route('checkout') }}";
-        //             },
-        //             error: function(xhr, status, error) {
-        //                 console.log(xhr.responseText);
-        //                 alert('Failed to add item to checkout. Please log in.'+xhr.responseText);
-        //             }
-        //         });
-
-            // });
-        // });
         document.querySelectorAll('.updatequantity').forEach(button => {
             button.addEventListener('click', function() {
                 const id = this.getAttribute('data-id');
@@ -454,8 +410,40 @@
                 const formattedPrice = parseInt(total).toLocaleString('id-ID');
                 // Setel harga total menjadi bilangan bulat
                 document.getElementById(`total-${id}`).textContent = parseInt(
-                formattedPrice); // Mengonversi total menjadi bilangan bulat
+                    formattedPrice); // Mengonversi total menjadi bilangan bulat
             });
+        });
+        $('#ongkir').change(function() {
+            var cityId = $(this).val();
+            var weight = 10000;
+
+            if (cityId !== '#') {
+                $.ajax({
+                    url: 'https://api.rajaongkir.com/starter/cost',
+                    type: 'POST',
+                    data: {
+                        origin: '9',
+                        destination: '9',
+                        weight: 1000,
+                        courier: 'jne'
+                    },
+                    headers: {
+                        key: '8cf577073ce7b9d72d77f7cceac30cd3'
+                    },
+                    success: function(response) {
+                        if (response.rajaongkir && response.rajaongkir.results.length > 0) {
+                            var cost = response.rajaongkir.results[0].costs[0].cost[0].value;
+                            $('#shipping').text('Rp ' + cost);
+                            updateTotal(cost);
+                        } else {
+                            console.error('No shipping cost data found.');
+                        }
+                    },
+                    error: function(error) {
+                        console.error('Error fetching shipping cost:', error);
+                    }
+                });
+            }
         });
     </script>
 @endsection

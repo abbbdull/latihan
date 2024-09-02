@@ -72,7 +72,7 @@
 
     <div class="colorlib-product">
         <div class="container">
-            <div class="row row-pb-lg">
+            {{-- <div class="row row-pb-lg">
                 <div class="col-sm-10 offset-md-1">
                     <div class="process-wrap">
                         <div class="process text-center active">
@@ -89,7 +89,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
             <div class="row">
                 <div class="col-lg-8">
                     <form method="post" class="colorlib-form">
@@ -103,7 +103,7 @@
                                         <select name="people" id="people" class="form-control">
                                             <option value="#">Select Province</option>
                                         </select>
-                                    </div>
+                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-12">
@@ -172,8 +172,7 @@
                                 </div>
                             </div>
                         </div>
-                        <button id="save-address-btn" class="btn btn-primary btn-pulse">Save</button>
-
+                        <a href="{{ route('cart') }}" id="save-address-btn" class="btn btn-primary btn-pulse">Save</a>
                     </form>
                 </div>
 
@@ -198,40 +197,40 @@
 
                         <div class="w-100"></div>
 
-                        <div class="col-md-12">
-                            <div class="cart-detail">
-                                <h2>Payment Method</h2>
-                                <div class="form-group">
-                                    <div class="col-md-12">
-                                        <div class="radio">
-                                            <label><input type="radio" name="optradio"> Direct Bank Tranfer</label>
+                            <div class="col-md-12">
+                                <div class="cart-detail">
+                                    <h2>Payment Method</h2>
+                                    <div class="form-group">
+                                        <div class="col-md-12">
+                                            <div class="radio">
+                                                <label><input type="radio" name="optradio"> Direct Bank Tranfer</label>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="form-group">
-                                    <div class="col-md-12">
-                                        <div class="radio">
-                                            <label><input type="radio" name="optradio"> Check Payment</label>
+                                    <div class="form-group">
+                                        <div class="col-md-12">
+                                            <div class="radio">
+                                                <label><input type="radio" name="optradio"> Check Payment</label>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="form-group">
-                                    <div class="col-md-12">
-                                        <div class="radio">
-                                            <label><input type="radio" name="optradio"> Paypal</label>
+                                    <div class="form-group">
+                                        <div class="col-md-12">
+                                            <div class="radio">
+                                                <label><input type="radio" name="optradio"> Paypal</label>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="form-group">
-                                    <div class="col-md-12">
-                                        <div class="checkbox">
-                                            <label><input type="checkbox" value=""> I have read and accept the terms
-                                                and conditions</label>
+                                    <div class="form-group">
+                                        <div class="col-md-12">
+                                            <div class="checkbox">
+                                                <label><input type="checkbox" value=""> I have read and accept the terms
+                                                    and conditions</label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-12 text-center">
@@ -352,7 +351,7 @@
                 console.error('Error fetching provinces:', error);
             },
             complete: function() {
-                $('#city').show();
+                $('#city').show(); // Sembunyikan indikator loading
             }
         });
 
@@ -419,9 +418,9 @@
 
                             // Mengisi select dropdown untuk provinsi dan kota
                             $('#idprovince').val(response.data
-                                .id_province); // Asumsi `id_province` adalah nilai yang valid
+                            .id_province); // Asumsi `id_province` adalah nilai yang valid
                             $('#idcity').val(response.data
-                                .id_city); // Asumsi `id_city` adalah nilai yang valid
+                            .id_city); // Asumsi `id_city` adalah nilai yang valid
 
                             // Fetch cities when province is pre-selected
                             fetchCities(response.data.id_province);
@@ -469,33 +468,69 @@
                 });
             }
         });
+        $(document).ready(function() {
+            $('#save-address-btn').on('click', function(e) {
+                e.preventDefault();
 
-        $('#city').change(function() {
-            var cityId = $(this).val();
-            var weight = 10000;
+                // Ambil data dari form
+                var firstName = $('#fname').val();
+                var lastName = $('#lname').val();
+                var company = $('#companyname').val();
+                var address = $('#address').val();
+                var userid = $('#userid').val();
+                var idprovince = $('#idprovince').val();
+                var idcity = $('#idcity').val();
+                var postalCode = $('#zippostalcode').val();
+                var phoneNumber = $('#phonenumber').val();
 
-            if (cityId !== '#') {
+                // Kirim data ke server menggunakan AJAX
                 $.ajax({
-                    url: 'https://api.rajaongkir.com/starter/cost',
+                    url: 'http://localhost/latihan6/api/save/checkout', // Ganti dengan URL API Anda
                     type: 'POST',
                     data: {
-                        origin: 'YOUR_ORIGIN',
-                        destination: cityId,
-                        weight: weight,
-                        courier: 'jne',
-                        _token: '{{ csrf_token() }}'
+                        first_name: firstName,
+                        last_name: lastName,
+                        company: company,
+                        address: address,
+                        userid: userid,
+                        id_province: id_province,
+                        id_city: city,
+                        postal_code: postalCode,
+                        phone_number: phoneNumber,
+                        _token: '{{ csrf_token() }}' // Token CSRF untuk keamanan
                     },
                     success: function(response) {
-                        var cost = response.rajaongkir.results[0].costs[0].cost[0].value;
-                        $('#shipping').text('$' + (cost / 1000).toFixed(
-                            2));
-                        updateTotal(cost);
+                        if (response.status === 'success') {
+                            Swal.fire({
+                                title: 'Success!',
+                                text: response.message,
+                                icon: 'success',
+                            });
+
+                            didClose: () => {
+                                window.location.href =
+                                '/cart'; // Ganti dengan URL halaman cart Anda
+                            }
+
+                        } else {
+                            Swal.fire({
+                                title: 'Failed!',
+                                text: response.message,
+                                icon: 'error',
+                            });
+                        }
                     },
-                    error: function(error) {
-                        console.error('Error fetching shipping cost:', error);
+                    error: function(xhr) {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Failed to save checkout.',
+                            icon: 'error',
+                        });
+                        console.error(xhr.responseText);
                     }
                 });
-            }
+            });
         });
+
     </script>
 @endsection
